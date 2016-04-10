@@ -359,13 +359,13 @@ class PurchaseRequest extends AbstractRequest
         $items = $this->getItems();
         if (!empty($items)) {
             foreach ($items as $key => $item) {
-                $data['ORDER_PNAME[' . $key . ']'][] = $item->getName();
-                $data['ORDER_PCODE[' . $key . ']'][] = $item->getSku();
-                $data['ORDER_PINFO[' . $key . ']'][] = $item->getDescription();
-                $data['ORDER_PRICE[' . $key . ']'][] = sprintf('%.2F', $item->getPrice());
-                $data['ORDER_QTY[' . $key . ']'][] = intval($item->getQuantity());
-                $data['ORDER_VAT[' . $key . ']'][] = sprintf('%.2F', $item->getTaxPercent());
-                $data['ORDER_PRICE_TYPE[' . $key . ']'][] = 'GROSS';
+                $data['ORDER_PNAME[' . $key . ']'] = $item->getName();
+                $data['ORDER_PCODE[' . $key . ']'] = $item->getSku();
+                $data['ORDER_PINFO[' . $key . ']'] = $item->getDescription();
+                $data['ORDER_PRICE[' . $key . ']'] = sprintf('%.2F', $item->getPrice());
+                $data['ORDER_QTY[' . $key . ']'] = intval($item->getQuantity());
+                $data['ORDER_VAT[' . $key . ']'] = sprintf('%.2F', $item->getTaxPercent());
+                $data['ORDER_PRICE_TYPE[' . $key . ']'] = 'GROSS';
             }
         }
 
@@ -483,12 +483,21 @@ class PurchaseRequest extends AbstractRequest
         $hashData['MERCHANT'] = $data['MERCHANT'];
         $hashData['ORDER_REF'] = $data['ORDER_REF'];
         $hashData['ORDER_DATE'] = $data['ORDER_DATE'];
-        $hashData['ORDER_PNAME'] = $data['ORDER_PNAME'];
-        $hashData['ORDER_PCODE'] = $data['ORDER_PCODE'];
-        $hashData['ORDER_PINFO'] = $data['ORDER_PINFO'];
-        $hashData['ORDER_PRICE'] = $data['ORDER_PRICE'];
-        $hashData['ORDER_QTY'] = $data['ORDER_QTY'];
-        $hashData['ORDER_VAT'] = $data['ORDER_VAT'];
+
+        /** @var Item $item */
+        $items = $this->getItems();
+        if (!empty($items)) {
+            foreach ($items as $key => $item) {
+                $data['ORDER_PNAME[' . $key . ']'] = $item->getName();
+                $data['ORDER_PCODE[' . $key . ']'] = $item->getSku();
+                $data['ORDER_PINFO[' . $key . ']'] = $item->getDescription();
+                $data['ORDER_PRICE[' . $key . ']'] = sprintf('%.2F', $item->getPrice());
+                $data['ORDER_QTY[' . $key . ']'] = intval($item->getQuantity());
+                $data['ORDER_VAT[' . $key . ']'] = sprintf('%.2F', $item->getTaxPercent());
+                $data['ORDER_PRICE_TYPE[' . $key . ']'] = 'GROSS';
+            }
+        }
+
         $hashData['ORDER_SHIPPING'] = $data['ORDER_SHIPPING'];
         $hashData['PRICES_CURRENCY'] = $data['PRICES_CURRENCY'];
         $hashData['DISCOUNT'] = $data['DISCOUNT'];
@@ -496,7 +505,6 @@ class PurchaseRequest extends AbstractRequest
         $hashData['DESTINATION_STATE'] = $data['DESTINATION_STATE'];
         $hashData['DESTINATION_COUNTRY'] = $data['DESTINATION_COUNTRY'];
         $hashData['PAY_METHOD'] = $data['PAY_METHOD'];
-        $hashData['ORDER_PRICE_TYPE'] = $data['ORDER_PRICE_TYPE'];
 
         return $this->hmacMd5($hashData);
     }
