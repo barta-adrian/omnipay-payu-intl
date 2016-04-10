@@ -25,6 +25,13 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
     protected $redirectUrl;
 
     /**
+     * Base data
+     *
+     * @var string
+     */
+    protected $data;
+
+    /**
      * Construct
      *
      * @param RequestInterface $request
@@ -35,6 +42,7 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
     {
         parent::__construct($request, $data);
 
+        $this->data = $data;
         $this->redirectUrl = $redirectUrl;
     }
 
@@ -55,7 +63,7 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
      */
     public function isSuccessful()
     {
-        return false;
+        return $this->data->status == 'SUCCESS' ? true : false;
     }
 
     /**
@@ -65,7 +73,8 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
      */
     public function isRedirect()
     {
-        return true;
+        $this->data->return_code == '3DS_ENROLLED' ? $this->redirectUrl = $this->data->url_3ds : false;
+        return $this->data->return_code == '3DS_ENROLLED' ? true : false;
     }
 
     /**
@@ -86,6 +95,20 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
     public function getRedirectMethod()
     {
         return Gateway::REDIRECT_METHOD;
+    }
+
+    /**
+     * Get message
+     *
+     * @return string
+     */
+    public function getMessage()
+    {
+        return [
+            'status' => (string) $this->data->STATUS[0],
+            'return_code' => (string) $this->data->RETURN_CODE[0],
+            'return_message' => (string) $this->data->RETURN_MESSAGE[0],
+        ];
     }
 
     /**

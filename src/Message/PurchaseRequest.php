@@ -313,6 +313,27 @@ class PurchaseRequest extends AbstractRequest
     }
 
     /**
+     * Get the installment count
+     *
+     * @return string
+     */
+    public function getInstallmentCount()
+    {
+        return $this->getParameter('installmentCount');
+    }
+
+    /**
+     * Sets the request installment count
+     *
+     * @param string $value
+     * @return $this
+     */
+    public function setInstallmentCount($value)
+    {
+        return $this->setParameter('installmentCount', $value);
+    }
+
+    /**
      * Get the request success URL
      *
      * @return string
@@ -353,70 +374,77 @@ class PurchaseRequest extends AbstractRequest
 
         $data['MERCHANT'] = $this->getMerchantId();
         $data['ORDER_REF'] = $this->getOrderId();
-        $data['ORDER_DATE'] = $this->getOrderDate();
+        $data['ORDER_DATE'] = gmdate('Y-m-d H:i:s');
 
-        /** @var Item $item */
         $items = $this->getItems();
         if (!empty($items)) {
             foreach ($items as $key => $item) {
-                $data['ORDER_PNAME[' . $key . ']'] = $item->getName();
-                $data['ORDER_PCODE[' . $key . ']'] = $item->getSku();
-                $data['ORDER_PINFO[' . $key . ']'] = $item->getDescription();
-                $data['ORDER_PRICE[' . $key . ']'] = sprintf('%.2F', $item->getPrice());
-                $data['ORDER_QTY[' . $key . ']'] = intval($item->getQuantity());
-                $data['ORDER_VAT[' . $key . ']'] = sprintf('%.2F', $item->getTaxPercent());
-                $data['ORDER_PRICE_TYPE[' . $key . ']'] = 'GROSS';
+                $data["ORDER_PNAME[$key]"]      = $item->getName();
+                $data["ORDER_PCODE[$key]"]      = $item->getSku();
+                $data["ORDER_PINFO[$key]"]      = $item->getDescription();
+                $data["ORDER_PRICE[$key]"]      = sprintf('%.2F', $item->getPrice());
+                $data["ORDER_QTY[$key]"]        = intval($item->getQuantity());
+                $data["ORDER_VAT[$key]"]        = sprintf('%.2F', $item->getTaxPercent());
+                $data["ORDER_PRICE_TYPE[$key]"] = 'GROSS';
             }
         }
 
-        $data['ORDER_SHIPPING'] = sprintf('%.2F', $this->getShippingAmount());
-        $data['PRICES_CURRENCY'] = $this->getCurrency();
-        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
-
-        // DELIVERY_{CITY|REGION|COUTNRYCODE} will be set by PayU with values from DESTINATION_{*}
-        $data['DESTINATION_CITY'] = $shippingAddress->getCity();
-        $data['DESTINATION_STATE'] = $shippingAddress->getState();
-        $data['DESTINATION_COUNTRY'] = $shippingAddress->getCountryCode();
-
-        $data['PAY_METHOD'] = Gateway::PAYU_METHOD_CCVISAMC;
-        $data['ORDER_HASH'] = ''; // will be overwritten with correct value below
-
-        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
-
-        /* additional billing & shipping info */
         $data['BILL_FNAME'] = $billingAddress->getFirstName();
         $data['BILL_LNAME'] = $billingAddress->getLastName();
         $data['BILL_EMAIL'] = $billingAddress->getEmail();
         if (mb_strlen($billingAddress->getCompany())) {
             $data['BILL_COMPANY'] = $billingAddress->getCompany();
         }
-        // BILL_PHONE, DELIVERY_PHONE: fields needed for anti fraud check
+
         $data['BILL_PHONE'] = mb_strlen($billingAddress->getPhone()) ? $billingAddress->getPhone() : '-';
         $data['BILL_ADDRESS'] = $billingAddress->getAddress();
         $data['BILL_ZIPCODE'] = $billingAddress->getZipCode();
+        $data['BILL_STATE'] = $billingAddress->getState();
         $data['BILL_CITY'] = $billingAddress->getCity();
         $data['BILL_COUNTRYCODE'] = $billingAddress->getCountryCode();
+
         $data['DELIVERY_FNAME'] = $shippingAddress->getFirstName();
         $data['DELIVERY_LNAME'] = $shippingAddress->getLastName();
-        $data['DELIVERY_PHONE'] = mb_strlen($shippingAddress->getPhone()) ? $shippingAddress->getPhone() : '-';
-        $data['DELIVERY_ADDRESS'] = $shippingAddress->getAddress();
-        $data['DELIVERY_ZIPCODE'] = $shippingAddress->getZipCode();
+        $data['DELIVERY_EMAIL'] = $shippingAddress->getEmail();
         if (mb_strlen($shippingAddress->getCompany())) {
             $data['DELIVERY_COMPANY'] = $shippingAddress->getCompany();
         }
+        $data['DELIVERY_PHONE'] = mb_strlen($shippingAddress->getPhone()) ? $shippingAddress->getPhone() : '-';
+        $data['DELIVERY_ADDRESS'] = $shippingAddress->getAddress();
+        $data['DELIVERY_ZIPCODE'] = $shippingAddress->getZipCode();
+        $data['DELIVERY_STATE'] = $shippingAddress->getState();
+        $data['DELIVERY_CITY'] = $shippingAddress->getCity();
+        $data['DELIVERY_COUNTRYCODE'] = $shippingAddress->getCountryCode();
+
+        $card = $this->getCard();
+        $data['SELECTED_INSTALLMENTS_NUMBER'] = $this->getInstallmentCount();
+        $data['CC_NUMBER'] = $card->getNumber();
+        $data['EXP_MONTH'] = $card->getExpiryMonth();
+        $data['EXP_YEAR'] = $card->getExpiryYear();
+        $data['CC_CVV'] = $card->getCvv();
+        $data['CC_OWNER'] = $card->getName();
 
         /* additional info */
-        $data['LANGUAGE'] = $this->httpRequest->getLocale();
         $data['BACK_REF'] = str_replace('{{orderid}}', $this->getOrderId(), $this->getSuccessUrl());
-        $data['DEBUG'] = 1;
         $data['ORDER_TIMEOUT'] = $this->getTimeout();
-        $data['TIMEOUT_URL'] = str_replace('{{orderid}}', $this->getOrderId(), $this->getTimeoutUrl());
-        $data['AUTOMODE'] = (int)$this->getAutoMode();
+        $data['TIMEOUT_URL'] = $this->getTimeoutUrl();
         $data['CLIENT_IP'] = $this->getClientIp();
+
+        $data['ORDER_SHIPPING'] = sprintf('%.2F', $this->getShippingAmount());
+        $data['PRICES_CURRENCY'] = $this->getCurrency();
+
+        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
+        $data['DESTINATION_CITY'] = $shippingAddress->getCity();
+        $data['DESTINATION_STATE'] = $shippingAddress->getState();
+        $data['DESTINATION_COUNTRY'] = $shippingAddress->getCountryCode();
+        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
+
+        $data['PAY_METHOD'] = Gateway::PAYU_METHOD_CCVISAMC;
+        $data['LANGUAGE'] = $this->httpRequest->getLocale();
 
         $data = $this->utf8izeArray($data);
 
-        $data['ORDER_HASH'] = $this->generateHash($data);
+        $data['ORDER_HASH'] = $this->hmacMd5($data);
 
         return $data;
     }
@@ -429,7 +457,8 @@ class PurchaseRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        return $this->response = new PurchaseResponse($this, $data, $this->getGatewayUrl());
+        $httpResponse = $this->httpClient->post($this->getGatewayUrl())->setBody($data)->send();
+        return $this->response = new PurchaseResponse($this, $httpResponse->xml(), $this->getGatewayUrl());
     }
 
     /**
@@ -480,33 +509,7 @@ class PurchaseRequest extends AbstractRequest
      */
     protected function generateHash(array $data)
     {
-        $hashData['MERCHANT'] = $data['MERCHANT'];
-        $hashData['ORDER_REF'] = $data['ORDER_REF'];
-        $hashData['ORDER_DATE'] = $data['ORDER_DATE'];
-
-        /** @var Item $item */
-        $items = $this->getItems();
-        if (!empty($items)) {
-            foreach ($items as $key => $item) {
-                $data['ORDER_PNAME[' . $key . ']'] = $item->getName();
-                $data['ORDER_PCODE[' . $key . ']'] = $item->getSku();
-                $data['ORDER_PINFO[' . $key . ']'] = $item->getDescription();
-                $data['ORDER_PRICE[' . $key . ']'] = sprintf('%.2F', $item->getPrice());
-                $data['ORDER_QTY[' . $key . ']'] = intval($item->getQuantity());
-                $data['ORDER_VAT[' . $key . ']'] = sprintf('%.2F', $item->getTaxPercent());
-                $data['ORDER_PRICE_TYPE[' . $key . ']'] = 'GROSS';
-            }
-        }
-
-        $hashData['ORDER_SHIPPING'] = $data['ORDER_SHIPPING'];
-        $hashData['PRICES_CURRENCY'] = $data['PRICES_CURRENCY'];
-        $hashData['DISCOUNT'] = $data['DISCOUNT'];
-        $hashData['DESTINATION_CITY'] = $data['DESTINATION_CITY'];
-        $hashData['DESTINATION_STATE'] = $data['DESTINATION_STATE'];
-        $hashData['DESTINATION_COUNTRY'] = $data['DESTINATION_COUNTRY'];
-        $hashData['PAY_METHOD'] = $data['PAY_METHOD'];
-
-        return $this->hmacMd5($hashData);
+        return $this->hmacMd5($data);
     }
 
     /**
@@ -517,11 +520,13 @@ class PurchaseRequest extends AbstractRequest
      */
     public function hmacMd5(array $arrData)
     {
+        ksort($arrData);
         $secretKey = $this->getSecretKey();
         $referenceObj = new \stdClass;
         $referenceObj->strData = '';
 
         array_walk_recursive($arrData, array($this, 'hmacMd5RecFunction'), $referenceObj);
+
         if (version_compare(phpversion(), '5.1.2', '>=') === true) {
             return hash_hmac('md5', $referenceObj->strData, $secretKey);
         }
