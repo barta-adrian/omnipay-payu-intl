@@ -1,5 +1,5 @@
 {
-    "name": "omnipay/payu-intl",
+    "name": "omnipay/payu-intl-new",
     "type": "library",
     "description": "International PayU driver for the Omnipay payment processing library",
     "keywords": [
