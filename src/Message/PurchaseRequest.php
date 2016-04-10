@@ -356,14 +356,17 @@ class PurchaseRequest extends AbstractRequest
         $data['ORDER_DATE'] = $this->getOrderDate();
 
         /** @var Item $item */
-        foreach ($this->getItems() as $key => $item) {
-            $data['ORDER_PNAME'][] = $item->getName();
-            $data['ORDER_PCODE'][] = $item->getSku();
-            $data['ORDER_PINFO'][] = $item->getDescription();
-            $data['ORDER_PRICE'][] = sprintf('%.2F', $item->getPrice());
-            $data['ORDER_QTY'][] = intval($item->getQuantity());
-            $data['ORDER_VAT'][] = sprintf('%.2F', $item->getTaxPercent());
-            $data['ORDER_PRICE_TYPE'][] = 'GROSS';
+        $items = $this->getItems();
+        if (!empty($items)) {
+            foreach ($items as $key => $item) {
+                $data['ORDER_PNAME[' . $key . ']'][] = $item->getName();
+                $data['ORDER_PCODE[' . $key . ']'][] = $item->getSku();
+                $data['ORDER_PINFO[' . $key . ']'][] = $item->getDescription();
+                $data['ORDER_PRICE[' . $key . ']'][] = sprintf('%.2F', $item->getPrice());
+                $data['ORDER_QTY[' . $key . ']'][] = intval($item->getQuantity());
+                $data['ORDER_VAT[' . $key . ']'][] = sprintf('%.2F', $item->getTaxPercent());
+                $data['ORDER_PRICE_TYPE[' . $key . ']'][] = 'GROSS';
+            }
         }
 
         $data['ORDER_SHIPPING'] = sprintf('%.2F', $this->getShippingAmount());
