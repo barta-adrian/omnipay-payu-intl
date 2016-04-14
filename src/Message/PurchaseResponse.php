@@ -63,7 +63,11 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
      */
     public function isSuccessful()
     {
-        return $this->data->status == 'SUCCESS' ? true : false;
+        if($this->data->RETURN_CODE != '3DS_ENROLLED' && $this->data->STATUS == 'SUCCESS') {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -73,8 +77,8 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
      */
     public function isRedirect()
     {
-        $this->data->return_code == '3DS_ENROLLED' ? $this->redirectUrl = $this->data->url_3ds : false;
-        return $this->data->return_code == '3DS_ENROLLED' ? true : false;
+        $this->data->RETURN_CODE == '3DS_ENROLLED' ? $this->redirectUrl = $this->data->URL_3DS : false;
+        return $this->data->RETURN_CODE == '3DS_ENROLLED' ? true : false;
     }
 
     /**
@@ -84,7 +88,7 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
      */
     public function getRedirectUrl()
     {
-        return $this->getRequest()->getGatewayUrl();
+        return $this->data->URL_3DS;
     }
 
     /**

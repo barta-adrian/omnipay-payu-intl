@@ -426,25 +426,27 @@ class PurchaseRequest extends AbstractRequest
 
         /* additional info */
         $data['BACK_REF'] = str_replace('{{orderid}}', $this->getOrderId(), $this->getSuccessUrl());
-        $data['ORDER_TIMEOUT'] = $this->getTimeout();
-        $data['TIMEOUT_URL'] = $this->getTimeoutUrl();
+//        $data['ORDER_TIMEOUT'] = $this->getTimeout();
+//        $data['TIMEOUT_URL'] = $this->getTimeoutUrl();
         $data['CLIENT_IP'] = $this->getClientIp();
 
         $data['ORDER_SHIPPING'] = sprintf('%.2F', $this->getShippingAmount());
         $data['PRICES_CURRENCY'] = $this->getCurrency();
 
-        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
-        $data['DESTINATION_CITY'] = $shippingAddress->getCity();
-        $data['DESTINATION_STATE'] = $shippingAddress->getState();
-        $data['DESTINATION_COUNTRY'] = $shippingAddress->getCountryCode();
-        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
+//        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
+//        $data['DESTINATION_CITY'] = $shippingAddress->getCity();
+//        $data['DESTINATION_STATE'] = $shippingAddress->getState();
+//        $data['DESTINATION_COUNTRY'] = $shippingAddress->getCountryCode();
+//        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
 
         $data['PAY_METHOD'] = Gateway::PAYU_METHOD_CCVISAMC;
-        $data['LANGUAGE'] = $this->httpRequest->getLocale();
+        $data['LANGUAGE'] = 'TR'; //$this->httpRequest->getLocale();
 
         $data = $this->utf8izeArray($data);
 
         $data['ORDER_HASH'] = $this->hmacMd5($data);
+
+        \Log::info($data);
 
         return $data;
     }
@@ -457,8 +459,9 @@ class PurchaseRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        $httpResponse = $this->httpClient->post($this->getGatewayUrl())->setBody($data)->send();
-        return $this->response = new PurchaseResponse($this, $httpResponse->xml(), $this->getGatewayUrl());
+        $httpResponse = $this->httpClient->post($this->getGatewayUrl(), null, $data)->send();
+        $xml = simplexml_load_string($httpResponse->getBody()->__toString());
+        return $this->response = new PurchaseResponse($this, $xml, $this->getGatewayUrl());
     }
 
     /**
