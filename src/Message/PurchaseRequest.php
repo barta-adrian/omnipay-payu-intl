@@ -396,57 +396,49 @@ class PurchaseRequest extends AbstractRequest
             $data['BILL_COMPANY'] = $billingAddress->getCompany();
         }
 
-        $data['BILL_PHONE'] = mb_strlen($billingAddress->getPhone()) ? $billingAddress->getPhone() : '-';
-        $data['BILL_ADDRESS'] = $billingAddress->getAddress();
-        $data['BILL_ZIPCODE'] = $billingAddress->getZipCode();
-        $data['BILL_STATE'] = $billingAddress->getState();
-        $data['BILL_CITY'] = $billingAddress->getCity();
-        $data['BILL_COUNTRYCODE'] = $billingAddress->getCountryCode();
-
-        $data['DELIVERY_FNAME'] = $shippingAddress->getFirstName();
-        $data['DELIVERY_LNAME'] = $shippingAddress->getLastName();
-        $data['DELIVERY_EMAIL'] = $shippingAddress->getEmail();
+        $data['BILL_PHONE']         = mb_strlen($billingAddress->getPhone()) ? $billingAddress->getPhone() : '-';
+        $data['BILL_ADDRESS']       = $billingAddress->getAddress();
+        $data['BILL_ZIPCODE']       = $billingAddress->getZipCode();
+        $data['BILL_STATE']         = $billingAddress->getState();
+        $data['BILL_CITY']          = $billingAddress->getCity();
+        $data['BILL_COUNTRYCODE']   = $billingAddress->getCountryCode();
+        $data['DELIVERY_FNAME']     = $shippingAddress->getFirstName();
+        $data['DELIVERY_LNAME']     = $shippingAddress->getLastName();
+        $data['DELIVERY_EMAIL']     = $shippingAddress->getEmail();
         if (mb_strlen($shippingAddress->getCompany())) {
             $data['DELIVERY_COMPANY'] = $shippingAddress->getCompany();
         }
-        $data['DELIVERY_PHONE'] = mb_strlen($shippingAddress->getPhone()) ? $shippingAddress->getPhone() : '-';
-        $data['DELIVERY_ADDRESS'] = $shippingAddress->getAddress();
-        $data['DELIVERY_ZIPCODE'] = $shippingAddress->getZipCode();
-        $data['DELIVERY_STATE'] = $shippingAddress->getState();
-        $data['DELIVERY_CITY'] = $shippingAddress->getCity();
-        $data['DELIVERY_COUNTRYCODE'] = $shippingAddress->getCountryCode();
+        $data['DELIVERY_PHONE']         = mb_strlen($shippingAddress->getPhone()) ? $shippingAddress->getPhone() : '-';
+        $data['DELIVERY_ADDRESS']       = $shippingAddress->getAddress();
+        $data['DELIVERY_ZIPCODE']       = $shippingAddress->getZipCode();
+        $data['DELIVERY_STATE']         = $shippingAddress->getState();
+        $data['DELIVERY_CITY']          = $shippingAddress->getCity();
+        $data['DELIVERY_COUNTRYCODE']   = $shippingAddress->getCountryCode();
 
         $card = $this->getCard();
-        $data['SELECTED_INSTALLMENTS_NUMBER'] = $this->getInstallmentCount();
-        $data['CC_NUMBER'] = $card->getNumber();
-        $data['EXP_MONTH'] = $card->getExpiryMonth();
-        $data['EXP_YEAR'] = $card->getExpiryYear();
-        $data['CC_CVV'] = $card->getCvv();
-        $data['CC_OWNER'] = $card->getName();
+        $data['SELECTED_INSTALLMENTS_NUMBER']   = $this->getInstallmentCount();
+        $data['CC_NUMBER']                      = $card->getNumber();
+        $data['EXP_MONTH']                      = $card->getExpiryMonth();
+        $data['EXP_YEAR']                       = $card->getExpiryYear();
+        $data['CC_CVV']                         = $card->getCvv();
+        $data['CC_OWNER']                       = $card->getName();
 
         /* additional info */
         $data['BACK_REF'] = str_replace('{{orderid}}', $this->getOrderId(), $this->getSuccessUrl());
-//        $data['ORDER_TIMEOUT'] = $this->getTimeout();
-//        $data['TIMEOUT_URL'] = $this->getTimeoutUrl();
         $data['CLIENT_IP'] = $this->getClientIp();
 
         $data['ORDER_SHIPPING'] = sprintf('%.2F', $this->getShippingAmount());
         $data['PRICES_CURRENCY'] = $this->getCurrency();
 
-//        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
-//        $data['DESTINATION_CITY'] = $shippingAddress->getCity();
-//        $data['DESTINATION_STATE'] = $shippingAddress->getState();
-//        $data['DESTINATION_COUNTRY'] = $shippingAddress->getCountryCode();
-//        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
+        $data['DISCOUNT'] = sprintf('%.2F', abs($this->getDiscountAmount()));
+        $data['TESTORDER'] = $this->getTestMode() ? 'TRUE' : 'FALSE';
 
         $data['PAY_METHOD'] = Gateway::PAYU_METHOD_CCVISAMC;
-        $data['LANGUAGE'] = 'TR'; //$this->httpRequest->getLocale();
+        $data['LANGUAGE'] = $this->httpRequest->getLocale();
 
         $data = $this->utf8izeArray($data);
 
         $data['ORDER_HASH'] = $this->hmacMd5($data);
-
-        \Log::info($data);
 
         return $data;
     }
